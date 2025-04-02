@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Budget Buddy - Categories</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" sizes="any">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            100: '#f3f4f6',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                            400: '#9ca3af',
+                            500: '#6b7280',
+                            600: '#4b5563',
+                            700: '#374151',
+                            800: '#1f2937',
+                            900: '#111827',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        #theme-toggle, #mobile-theme-toggle {
+            transition: all 0.3s ease;
+        }
+        #theme-toggle:hover, #mobile-theme-toggle:hover {
+            transform: scale(1.1);
+        }
+        #theme-toggle:active, #mobile-theme-toggle:active {
+            transform: scale(0.95);
+        }
+        .dark .chartjs-render-monitor {
+            filter: brightness(0.9) contrast(1.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-dark-900 dark:text-dark-200">
+<header class="bg-white shadow fixed w-full z-10 top-0 dark:bg-dark-800 dark:shadow-dark">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="flex items-center">
+            <div class="bg-green-500 text-white rounded-full w-10 h-10 flex items-center justify-center">
+                <span class="font-bold">BB</span>
+            </div>
+            <h1 class="ml-3 text-2xl font-bold text-green-500">Budget Buddy</h1>
+        </div>
+        <nav class="hidden md:flex space-x-4 items-center">
+            <a class="text-gray-600 flex items-center dark:text-dark-400 hover:text-green-500 dark:hover:text-green-400" href="/dashboard">
+                <i class="fas fa-home mr-1"></i> Dashboard
+            </a>
+            <a class="text-gray-600 flex items-center dark:text-dark-400 hover:text-green-500 dark:hover:text-green-400" href="/expenses">
+                <i class="fas fa-wallet mr-1"></i> Expenses
+            </a>
+            <a class="text-gray-600 flex items-center dark:text-dark-400 hover:text-green-500 dark:hover:text-green-400" href="/insights">
+                <i class="fas fa-chart-line mr-1"></i> Insights
+            </a>
+            <a class="text-green-500 font-semibold flex items-center dark:text-green-400" href="/categories">
+                <i class="fas fa-list-ul mr-1"></i> Categories
+            </a>
+            <button id="theme-toggle" class="ml-4 text-gray-600 dark:text-dark-400 hover:text-gray-800 dark:hover:text-dark-200 transition-colors duration-200 focus:outline-none">
+                <i class="fas fa-moon dark:hidden"></i>
+                <i class="fas fa-sun hidden dark:block"></i>
+            </button>
+            <!-- User menu with logout -->
+            <div class="ml-4 relative">
+                <div class="flex items-center">
+                    <span class="hidden md:inline-block text-sm text-gray-600 dark:text-dark-400 mr-2">Hi, {{ username }}</span>
+                    <a href="/logout" class="text-gray-600 hover:text-red-500 dark:text-dark-400 dark:hover:text-red-400 transition-colors duration-200">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="sr-only">Logout</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+        <div class="md:hidden">
+            <button id="menu-button" class="text-gray-600 focus:outline-none dark:text-dark-400 hover:text-green-500 dark:hover:text-green-400">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+    <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-dark-800">
+        <div class="px-4 py-2 text-gray-600 dark:text-dark-400">
+            <span>Welcome, {{ username }}</span>
+        </div>
+        <a href="/dashboard" class="block px-4 py-2 text-gray-600 hover:text-green-500 dark:text-dark-400 dark:hover:text-green-400">
+            <i class="fas fa-home mr-1"></i> Dashboard
+        </a>
+        <a href="/expenses" class="block px-4 py-2 text-gray-600 hover:text-green-500 dark:text-dark-400 dark:hover:text-green-400">
+            <i class="fas fa-wallet mr-1"></i> Expenses
+        </a>
+        <a href="/insights" class="block px-4 py-2 text-gray-600 hover:text-green-500 dark:text-dark-400 dark:hover:text-green-400">
+            <i class="fas fa-chart-line mr-1"></i> Insights
+        </a>
+        <a href="/categories" class="block px-4 py-2 text-green-500 font-semibold dark:text-green-400">
+            <i class="fas fa-list-ul mr-1"></i> Categories
+        </a>
+        <button id="mobile-theme-toggle" class="block w-full text-left px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-dark-400 dark:hover:text-dark-200">
+            <i class="fas fa-moon mr-1 dark:hidden"></i>
+            <i class="fas fa-sun mr-1 hidden dark:block"></i>
+            Toggle Theme
+        </button>
+        <a href="/logout" class="block px-4 py-2 text-gray-600 hover:text-red-500 dark:text-dark-400 dark:hover:text-red-400 border-t border-gray-200 dark:border-dark-700">
+            <i class="fas fa-sign-out-alt mr-1"></i> Logout
+        </a>
+    </div>
+</header>
+<main class="container mx-auto px-4 py-8 pt-20">
+    <h1 class="text-3xl font-semibold mb-4 dark:text-dark-100">Categories</h1>
+    <p class="text-gray-600 mb-8 dark:text-dark-400">Organize and track your spending</p>
+    
+    <!-- Show current budget items grouped by category -->
+    <section class="mb-8 border-2 border-gray-200 rounded-lg p-4 dark:border-dark-700">
+        <h2 class="text-xl font-semibold mb-4 dark:text-dark-100">Items by Category</h2>
+        <p class="text-gray-600 mb-4 dark:text-dark-400">Your current budget items grouped by category</p>
+        
+        <div class="grid grid-cols-1 gap-6">
+            {% for category, amount in category_data.items() %}
+            <div class="border-2 border-green-500 rounded-lg p-4 dark:border-green-400">
+                <div class="flex items-center mb-4">
+                    <div class="bg-green-500 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3 dark:bg-green-400">
+                        <i class="fas fa-tag"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold dark:text-dark-100">{{ category }}</h3>
+                        <p class="text-gray-600 dark:text-dark-400">Total: ${{ "%.2f"|format(amount) }}</p>
+                    </div>
+                </div>
+                
+                <div class="mt-2">
+                    <h4 class="font-medium text-gray-700 mb-2 dark:text-dark-300">Items in this category:</h4>
+                    <ul class="divide-y divide-gray-200 dark:divide-dark-600">
+                        {% set found = false %}
+                        {% for item in items %}
+                            {% if item.item|string == category|string %}
+                                {% set found = true %}
+                                <li class="py-2 flex justify-between dark:text-dark-100">
+                                    <span>{{ item.name }}</span>
+                                    <span class="font-medium">${{ "%.2f"|format(item.cost) }}</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if not found %}
+                            <li class="py-2 text-gray-500 dark:text-dark-500">No items in this category</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            {% endfor %}
+            
+            {% if not category_data %}
+            <div class="text-center py-8 text-gray-500 dark:text-dark-400">
+                <p>No items added yet. Add your first budget item on the Dashboard or Expenses page!</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    
+    <!-- Category Comparison Chart -->
+    <section class="border-2 border-gray-200 rounded-lg p-4 dark:border-dark-700">
+        <h2 class="text-xl font-semibold mb-4 dark:text-dark-100">Category Comparison</h2>
+        <p class="text-gray-600 mb-4 dark:text-dark-400">Compare spending across different items</p>
+        
+        {% if category_data %}
+        <div class="bg-white p-4 rounded-lg shadow dark:bg-dark-800">
+            <canvas id="categoryChart" class="w-full h-auto"></canvas>
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-gray-500 dark:text-dark-400">
+            <p>No data available yet. Add some items to see the comparison chart.</p>
+        </div>
+        {% endif %}
+    </section>
+</main>
+
+<script>
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('theme-toggle');
+    const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
+    const html = document.documentElement;
+
+    // Check for saved user preference or use system preference
+    const userTheme = localStorage.getItem('theme');
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    // Initial theme check
+    const themeCheck = () => {
+        if (userTheme === 'dark' || (!userTheme && systemTheme)) {
+            html.classList.add('dark');
+            if (themeToggle) themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            if (mobileThemeToggle) mobileThemeToggle.innerHTML = '<i class="fas fa-sun mr-1"></i> Toggle Theme';
+        } else {
+            html.classList.remove('dark');
+            if (themeToggle) themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            if (mobileThemeToggle) mobileThemeToggle.innerHTML = '<i class="fas fa-moon mr-1"></i> Toggle Theme';
+        }
+    };
+
+    // Manual theme switch
+    const themeSwitch = () => {
+        if (html.classList.contains('dark')) {
+            html.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+            if (themeToggle) themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            if (mobileThemeToggle) mobileThemeToggle.innerHTML = '<i class="fas fa-moon mr-1"></i> Toggle Theme';
+        } else {
+            html.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            if (themeToggle) themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            if (mobileThemeToggle) mobileThemeToggle.innerHTML = '<i class="fas fa-sun mr-1"></i> Toggle Theme';
+        }
+    };
+
+    // Event listeners for theme toggle buttons
+    if (themeToggle) themeToggle.addEventListener('click', themeSwitch);
+    if (mobileThemeToggle) mobileThemeToggle.addEventListener('click', themeSwitch);
+
+    // Invoke theme check on initial load
+    themeCheck();
+
+    document.getElementById('menu-button').addEventListener('click', function () {
+        var menu = document.getElementById('mobile-menu');
+        menu.classList.toggle('hidden');
+    });
+</script>
+
+{% if category_data %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        const isDarkMode = document.documentElement.classList.contains('dark');
+        
+        // Data is provided as a JSON string in a data attribute
+        const chartDataStr = `{
+            "labels": [{% for category, amount in category_data.items() %}"{{ category }}",{% endfor %}],
+            "data": [{% for category, amount in category_data.items() %}{{ amount }},{% endfor %}]
+        }`;
+        
+        // Parse the JSON string
+        const chartData = JSON.parse(chartDataStr.replace(/,]/g, ']'));
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Spending',
+                    data: chartData.data,
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 159, 64, 0.2)',
+                        'rgba(201, 203, 207, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(201, 203, 207, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: isDarkMode ? '#e5e7eb' : '#6b7280'
+                        },
+                        grid: {
+                            color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: isDarkMode ? '#e5e7eb' : '#6b7280'
+                        },
+                        grid: {
+                            color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: isDarkMode ? '#e5e7eb' : '#6b7280'
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endif %}
+</body>
+</html>

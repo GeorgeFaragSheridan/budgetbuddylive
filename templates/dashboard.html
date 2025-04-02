@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Budget Buddy</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" sizes="any">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            100: '#f3f4f6',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                            400: '#9ca3af',
+                            500: '#6b7280',
+                            600: '#4b5563',
+                            700: '#374151',
+                            800: '#1f2937',
+                            900: '#111827',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .dark .chartjs-render-monitor {
+            filter: brightness(0.9) contrast(1.1);
+        }
+
+        #theme-toggle {
+            transition: all 0.3s ease;
+        }
+
+        #theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        #theme-toggle:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900 dark:bg-dark-900 dark:text-dark-200">
+<header class="bg-white shadow fixed w-full z-10 dark:bg-dark-800 dark:shadow-dark">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="flex items-center">
+            <div class="bg-green-500 text-white rounded-full w-10 h-10 flex items-center justify-center">
+                <span class="font-bold">BB</span>
+            </div>
+            <h1 class="ml-3 text-2xl font-bold text-green-500">Budget Buddy</h1>
+        </div>
+        <nav class="hidden md:flex space-x-4 items-center">
+            <a class="text-green-500 font-semibold flex items-center" href="/dashboard">
+                <i class="fas fa-home mr-1"></i> Dashboard
+            </a>
+            <a class="text-gray-600 flex items-center dark:text-dark-400" href="/expenses">
+                <i class="fas fa-wallet mr-1"></i> Expenses
+            </a>
+            <a class="text-gray-600 flex items-center dark:text-dark-400" href="/insights">
+                <i class="fas fa-chart-line mr-1"></i> Insights
+            </a>
+            <a class="text-gray-600 flex items-center dark:text-dark-400 hover:text-green-500 dark:hover:text-green-400" href="/categories">
+                <i class="fas fa-list-ul mr-1"></i> Categories
+            </a>
+            <button id="theme-toggle" class="ml-4 text-gray-600 dark:text-dark-400 hover:text-gray-800 dark:hover:text-dark-200 transition-colors duration-200 focus:outline-none">
+                <i class="fas fa-moon dark:hidden"></i>
+                <i class="fas fa-sun hidden dark:block"></i>
+            </button>
+            <!-- User menu with logout -->
+            <div class="ml-4 relative">
+                <div class="flex items-center">
+                    <span class="hidden md:inline-block text-sm text-gray-600 dark:text-dark-400 mr-2">Hi, {{ username }}</span>
+                    <a href="/logout" class="text-gray-600 hover:text-red-500 dark:text-dark-400 dark:hover:text-red-400 transition-colors duration-200">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="sr-only">Logout</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+        <div class="md:hidden">
+            <button id="menu-toggle" class="text-gray-600 hover:text-green-500 focus:outline-none dark:text-dark-400 dark:hover:text-green-400">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+    <!-- Mobile menu -->
+    <nav id="mobile-menu" class="hidden md:hidden bg-white dark:bg-dark-800">
+        <div class="px-4 py-2 text-gray-600 dark:text-dark-400">
+            <span>Welcome, {{ username }}</span>
+        </div>
+        <a href="/dashboard" class="block px-4 py-2 text-green-500 font-semibold dark:text-green-400">
+            <i class="fas fa-home mr-1"></i> Dashboard
+        </a>
+        <a href="/expenses" class="block px-4 py-2 text-gray-600 hover:text-green-500 dark:text-dark-400 dark:hover:text-green-400">
+            <i class="fas fa-wallet mr-1"></i> Expenses
+        </a>
+        <a href="/insights" class="block px-4 py-2 text-gray-600 hover:text-green-500 dark:text-dark-400 dark:hover:text-green-400">
+            <i class="fas fa-chart-line mr-1"></i> Insights
+        </a>
+        <a href="/categories" class="block px-4 py-2 text-gray-600 hover:text-green-500 dark:text-dark-400 dark:hover:text-green-400">
+            <i class="fas fa-list-ul mr-1"></i> Categories
+        </a>
+        <button id="mobile-theme-toggle" class="block w-full text-left px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-dark-400 dark:hover:text-dark-200">
+            <i class="fas fa-moon mr-1 dark:hidden"></i>
+            <i class="fas fa-sun mr-1 hidden dark:block"></i>
+            Toggle Theme
+        </button>
+        <a href="/logout" class="block px-4 py-2 text-gray-600 hover:text-red-500 dark:text-dark-400 dark:hover:text-red-400 border-t border-gray-200 dark:border-dark-700">
+            <i class="fas fa-sign-out-alt mr-1"></i> Logout
+        </a>
+    </nav>
+</header>
+
+<main class="container mx-auto px-4 py-24">
+    <h2 class="text-3xl font-bold dark:text-dark-100">Welcome to Budget Buddy</h2>
+    <p class="text-gray-600 dark:text-dark-400">Your personal finance tracker</p>
+
+    <!-- Budget Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow dark:bg-dark-800">
+            <h3 class="text-xl font-bold dark:text-dark-100">Monthly Budget</h3>
+            <p class="text-gray-600 dark:text-dark-400">Your current spending</p>
+            <div class="mt-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-dark-400" id="budget-spent">${{ "%.2f"|format(total_spent) }} spent</span>
+                    <span class="text-gray-600 dark:text-dark-400" id="budget-percentage">
+                        {% if total_spent > 0 %}
+                            {% set percentage = (total_spent / monthly_budget) * 100 %}
+                            {{ percentage|round|int }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </span>
+                </div>
+                <!-- Progress Bar -->
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2 relative overflow-hidden dark:bg-dark-600">
+                    <div class="bg-green-500 h-2.5 rounded-full absolute top-0 left-0" 
+                         id="budget-bar" 
+                         data-percentage="{{ (total_spent / monthly_budget) * 100 }}"></div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mt-4">
+                <div class="bg-gray-100 p-4 rounded-lg flex flex-col h-full dark:bg-dark-700">
+                    <p class="text-gray-600 dark:text-dark-400">Remaining</p>
+                    <p class="text-2xl font-bold mb-auto dark:text-dark-100" id="budget-remaining">${{ "%.2f"|format(monthly_budget - total_spent) }}</p>
+                    <form action="/set_budget" method="POST" class="mt-2">
+                        <div class="flex items-center">
+                            <input type="number" name="monthly_budget" value="{{ monthly_budget }}" step="0.01" min="0" required
+                                class="w-full border border-gray-300 rounded-lg py-1 px-2 mr-2 text-sm dark:bg-dark-600 dark:border-dark-500 dark:text-dark-100" placeholder="Set monthly budget">
+                            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded-lg text-sm">
+                                Update
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="bg-gray-100 p-4 rounded-lg flex flex-col justify-between h-full dark:bg-dark-700">
+                    <div>
+                        <p class="text-gray-600 dark:text-dark-400">Total Items</p>
+                        <p class="text-2xl font-bold dark:text-dark-100">{{ items|length }}</p>
+                    </div>
+                    <div class="text-sm text-gray-500 dark:text-dark-400 mt-auto">
+                        Track all your expenses
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow dark:bg-dark-800">
+            <h3 class="text-xl font-bold dark:text-dark-100">Quick Add</h3>
+            <form action="/dashboard" method="POST" class="mt-4">
+                <div class="mb-4">
+                    <label class="block text-gray-700 dark:text-dark-400">Category</label>
+                    <select name="item" class="w-full border border-gray-300 rounded-lg p-2 mt-1 dark:bg-dark-600 dark:border-dark-500 dark:text-dark-100" required>
+                        <option value="" disabled selected>Select a category</option>
+                        <option value="Housing">Housing</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Groceries">Groceries</option>
+                        <option value="Dining">Dining</option>
+                        <option value="Transportation">Transportation</option>
+                        <option value="Insurance">Insurance</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Investments">Investments</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Personal Care">Personal Care</option>
+                        <option value="Subscriptions">Subscriptions</option>
+                        <option value="Travel">Travel</option>
+                        <option value="Fitness">Fitness</option>
+                        <option value="Pets">Pets</option>
+                        <option value="Technology">Technology</option>
+                        <option value="Debt">Debt</option>
+                        <option value="Gifts/Donations">Gifts/Donations</option>
+                        <option value="Miscellaneous">Miscellaneous</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 dark:text-dark-400">Item Name</label>
+                    <input type="text" name="name" class="w-full border border-gray-300 rounded-lg p-2 mt-1 dark:bg-dark-600 dark:border-dark-500 dark:text-dark-100" placeholder="e.g., Rent, Netflix, Groceries" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 dark:text-dark-400">Cost</label>
+                    <input type="number" name="cost" class="w-full border border-gray-300 rounded-lg p-2 mt-1 dark:bg-dark-600 dark:border-dark-500 dark:text-dark-100" step="0.01" min="0" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 dark:text-dark-400">Date</label>
+                    <input type="date" name="date" class="w-full border border-gray-300 rounded-lg p-2 mt-1 dark:bg-dark-600 dark:border-dark-500 dark:text-dark-100" value="{{ today_date }}">
+                    <small class="text-gray-500 dark:text-dark-500">Leave blank for current date</small>
+                </div>
+                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors duration-300">
+                    Add New Item
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <div class="bg-white p-6 rounded-lg shadow dark:bg-dark-800">
+            <h3 class="text-xl font-bold dark:text-dark-100">Spending by Category</h3>
+            <div class="mt-4" style="height: 300px;">
+                <canvas id="categoryPieChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow dark:bg-dark-800">
+            <h3 class="text-xl font-bold dark:text-dark-100">AI Insights</h3>
+            <p class="text-gray-600 dark:text-dark-400">Smart analysis of your spending habits</p>
+            <div class="mt-4">
+                <div class="flex items-start">
+                    <span class="w-3 h-3 bg-red-500 inline-block mr-2 mt-1"></span>
+                    <div>
+                        <p class="font-bold dark:text-dark-100">Highest Spending</p>
+                        <p class="text-gray-600 dark:text-dark-400" id="highest-category">
+                            {% if category_data %}
+                                {% set max_item = category_data|dictsort(by='value')|reverse|first %}
+                                Your highest expense is {{ max_item[0] }} with ${{ "%.2f"|format(max_item[1]) }}
+                            {% else %}
+                                No spending data available
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-start mt-4">
+                    <span class="w-3 h-3 bg-green-500 inline-block mr-2 mt-1"></span>
+                    <div>
+                        <p class="font-bold dark:text-dark-100">Budget Status</p>
+                        <p class="text-gray-600 dark:text-dark-400" id="savings-opportunity">
+                            {% if total_spent > 0 %}
+                                {% if total_spent > monthly_budget %}
+                                    You are over budget by ${{ "%.2f"|format(total_spent - monthly_budget) }}
+                                {% else %}
+                                    You have ${{ "%.2f"|format(monthly_budget - total_spent) }} remaining in your budget
+                                {% endif %}
+                            {% else %}
+                                No spending data available
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-start mt-4" id="personalized-tips-container">
+                    <span class="w-3 h-3 bg-blue-500 inline-block mr-2 mt-1"></span>
+                    <div class="w-full">
+                        <div class="flex justify-between items-center">
+                            <p class="font-bold dark:text-dark-100">Personalized Tips</p>
+                            <button id="refresh-insights" class="text-xs text-green-500 hover:text-green-700 flex items-center">
+                                <i class="fas fa-sync-alt mr-1"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="text-gray-600" id="personalized-tips">
+                            <p>Add expenses to get personalized tips</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-center mt-4" id="loading-container" style="display: none;">
+                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="bg-white p-6 rounded-lg shadow mt-6 dark:bg-dark-800">
+        <div class="flex justify-between items-center">
+            <h3 class="text-xl font-bold dark:text-dark-100">Recent Items</h3>
+            <a class="text-green-500 hover:text-green-700 transition-colors" href="/expenses">View All</a>
+        </div>
+        <div class="mt-4 overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-600">
+                <thead>
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-dark-400">Category</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-dark-400">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-dark-400">Cost</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-dark-400">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200 dark:bg-dark-800 dark:divide-dark-600">
+                    {% for item in recent_items %}
+                    <tr class="dark:hover:bg-dark-700">
+                        <td class="px-6 py-4 whitespace-nowrap dark:text-dark-100">{{ item.item }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap dark:text-dark-100">{{ item.name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap dark:text-dark-100">${{ "%.2f"|format(item.cost) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap dark:text-dark-100">{{ item.date_created.strftime('%b %d, %Y') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script>
+// Set up charts and budget visualization when the document is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the mobile menu toggle
+    document.getElementById('menu-toggle').addEventListener('click', function() {
+        document.getElementById('mobile-menu').classList.toggle('hidden');
+    });
+    
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('theme-toggle');
+    const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
+    const html = document.documentElement;
+
+    // Check for saved theme preference
+    const userTheme = localStorage.getItem('theme');
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    // Initial theme check
+    const themeCheck = () => {
+        if (userTheme === 'dark' || (!userTheme && systemTheme)) {
+            html.classList.add('dark');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            if (mobileThemeToggle) {
+                mobileThemeToggle.innerHTML = '<i class="fas fa-sun mr-1"></i> Toggle Theme';
+            }
+        } else {
+            html.classList.remove('dark');
+            themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            if (mobileThemeToggle) {
+                mobileThemeToggle.innerHTML = '<i class="fas fa-moon mr-1"></i> Toggle Theme';
+            }
+        }
+    };
+
+    // Manual theme switch
+    const themeSwitch = () => {
+        if (html.classList.contains('dark')) {
+            html.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+            themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            if (mobileThemeToggle) {
+                mobileThemeToggle.innerHTML = '<i class="fas fa-moon mr-1"></i> Toggle Theme';
+            }
+        } else {
+            html.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            if (mobileThemeToggle) {
+                mobileThemeToggle.innerHTML = '<i class="fas fa-sun mr-1"></i> Toggle Theme';
+            }
+        }
+    };
+
+    // Event listeners for theme toggle buttons
+    themeToggle.addEventListener('click', themeSwitch);
+    if (mobileThemeToggle) {
+        mobileThemeToggle.addEventListener('click', themeSwitch);
+    }
+
+    // Invoke theme check
+    themeCheck();
+    
+    // Budget progress bar
+    const budgetBar = document.getElementById('budget-bar');
+    if (budgetBar) {
+        const percentage = parseFloat(budgetBar.getAttribute('data-percentage'));
+        budgetBar.style.width = Math.min(100, percentage) + '%';
+        
+        // Change color if over budget
+        if (percentage > 100) {
+            budgetBar.classList.remove('bg-green-500');
+            budgetBar.classList.add('bg-red-500');
+        }
+    }
+    
+    const ctx = document.getElementById('categoryPieChart').getContext('2d');
+    
+    // Get data from Flask template
+    // Data is provided as a JSON string in a data attribute
+    const categoryDataStr = `{
+        "labels": [{% for category, amount in category_data.items() %}"{{ category }}",{% endfor %}],
+        "data": [{% for category, amount in category_data.items() %}{{ amount }},{% endfor %}]
+    }`;
+    
+    // Parse the JSON string
+    const categoryData = JSON.parse(categoryDataStr.replace(/,]/g, ']'));
+    
+    // Colors for the chart
+    const backgroundColors = [
+        'rgba(75, 192, 192, 0.7)',
+        'rgba(153, 102, 255, 0.7)',
+        'rgba(255, 206, 86, 0.7)',
+        'rgba(255, 159, 64, 0.7)',
+        'rgba(201, 203, 207, 0.7)',
+        'rgba(255, 99, 132, 0.7)',
+        'rgba(54, 162, 235, 0.7)'
+    ];
+    
+    const borderColors = [
+        'rgba(75, 192, 192, 1)',
+        'rgba(153, 102, 255, 1)',
+        'rgba(255, 206, 86, 1)',
+        'rgba(255, 159, 64, 1)',
+        'rgba(201, 203, 207, 1)',
+        'rgba(255, 99, 132, 1)',
+        'rgba(54, 162, 235, 1)'
+    ];
+    
+    // Create the chart
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: categoryData.labels,
+            datasets: [{
+                label: 'Spending by Category',
+                data: categoryData.data,
+                backgroundColor: backgroundColors.slice(0, categoryData.labels.length),
+                borderColor: borderColors.slice(0, categoryData.labels.length),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { 
+                    position: 'right',
+                    labels: {
+                        color: html.classList.contains('dark') ? '#e5e7eb' : '#6b7280'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.label}: $${context.raw.toFixed(2)}`;
+                        }
+                    }
+                }
+            },
+            animation: {
+                animateScale: true,
+                animateRotate: true
+            }
+        }
+    });
+    
+    // Handle form submission for Quick Add expense
+    const expenseForm = document.querySelector('form[action="/dashboard"]');
+    if (expenseForm) {
+        expenseForm.addEventListener('submit', function(event) {
+            // Get form data to pass to AI insights
+            const categorySelect = document.querySelector('select[name="item"]');
+            const nameInput = document.querySelector('input[name="name"]');
+            const costInput = document.querySelector('input[name="cost"]');
+            
+            // Store the values for later use after form submission
+            if (categorySelect && nameInput && costInput) {
+                localStorage.setItem('lastAddedCategory', categorySelect.value);
+                localStorage.setItem('lastAddedName', nameInput.value);
+                localStorage.setItem('lastAddedCost', costInput.value);
+                localStorage.setItem('shouldFetchInsights', 'true');
+            }
+        });
+    }
+    
+    // Check if we should fetch insights based on recently added item
+    const shouldFetchInsights = localStorage.getItem('shouldFetchInsights');
+    if (shouldFetchInsights === 'true') {
+        // Get stored values from localStorage
+        const category = localStorage.getItem('lastAddedCategory');
+        const name = localStorage.getItem('lastAddedName');
+        const cost = localStorage.getItem('lastAddedCost');
+        
+        // Clear the flag to prevent fetching again on page refresh
+        localStorage.setItem('shouldFetchInsights', 'false');
+        
+        // Fetch personalized insights based on the newly added expense
+        fetchAIInsights(category, name, cost);
+    }
+    
+    // Add event listener for refresh button
+    const refreshButton = document.getElementById('refresh-insights');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', function() {
+            // Get general insights without specifying a particular expense
+            fetchAIInsights();
+        });
+    }
+    
+    // Function to fetch personalized AI insights
+    function fetchAIInsights(category, name, cost) {
+        // Show loading spinner
+        const loadingContainer = document.getElementById('loading-container');
+        if (loadingContainer) {
+            loadingContainer.style.display = 'flex';
+        }
+        
+        // Prepare data for the request
+        const requestData = {
+            category: category,
+            name: name,
+            cost: cost
+        };
+        
+        // Send request to the backend
+        fetch('/get_ai_insights', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading spinner
+            if (loadingContainer) {
+                loadingContainer.style.display = 'none';
+            }
+            
+            // Update the personalized tips container
+            const tipsContainer = document.getElementById('personalized-tips');
+            if (tipsContainer && data.insights) {
+                tipsContainer.innerHTML = data.insights;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching AI insights:', error);
+            // Hide loading spinner
+            if (loadingContainer) {
+                loadingContainer.style.display = 'none';
+            }
+            
+            // Show error message
+            const tipsContainer = document.getElementById('personalized-tips');
+            if (tipsContainer) {
+                tipsContainer.innerHTML = '<p>Unable to load personalized tips at this time.</p>';
+            }
+        });
+    }
+});
+</script>
+</body>
+</html>

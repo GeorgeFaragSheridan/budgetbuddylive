@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Budget Buddy - Update Item</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" sizes="any">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            100: '#f3f4f6',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                            400: '#9ca3af',
+                            500: '#6b7280',
+                            600: '#4b5563',
+                            700: '#374151',
+                            800: '#1f2937',
+                            900: '#111827',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        #theme-toggle {
+            transition: all 0.3s ease;
+        }
+        #theme-toggle:hover {
+            transform: scale(1.1);
+        }
+        #theme-toggle:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900 dark:bg-dark-900 dark:text-dark-200">
+<header class="bg-white shadow fixed w-full z-10 dark:bg-dark-800 dark:shadow-dark">
+    <!--the Entire Navbar-->
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+
+        <!--the entire title-->
+        <div class="flex items-center">
+
+            <!--the icon placeholder-->
+            <div class="bg-green-500 text-white rounded-full w-10 h-10 flex items-center justify-center">
+                <span class="font-bold">
+                    BB
+                </span>
+            </div>
+
+            <h1 class="ml-3 text-2xl font-bold text-green-500">
+                Budget Buddy
+            </h1>
+        </div>
+
+        <!--the rest of the Navbar-->
+        <nav class="hidden md:flex space-x-4 items-center">
+            <a class="text-gray-600 flex items-center dark:text-dark-400 hover:text-green-500 dark:hover:text-green-400" href="/dashboard">
+                <!--the icon for the dashboard page-->
+                <i class="fas fa-home mr-1"></i> Dashboard
+            </a>
+            <a class="text-green-500 font-semibold flex items-center dark:text-green-400" href="/expenses">
+                <!--the icon for the expenses page-->
+                <i class="fas fa-wallet mr-1"></i> Expenses
+            </a>
+            <a class="text-gray-600 flex items-center dark:text-dark-400 hover:text-green-500 dark:hover:text-green-400" href="/insights">
+                <!--the icon for the insights page-->
+                <i class="fas fa-chart-line mr-1"></i> Insights
+            </a>
+            <a class="text-gray-600 flex items-center dark:text-dark-400 hover:text-green-500 dark:hover:text-green-400" href="/categories">
+                <!--the icon for the categories page-->
+                <i class="fas fa-list-ul mr-1"></i> Categories
+            </a>
+            <button id="theme-toggle" class="ml-4 text-gray-600 dark:text-dark-400 hover:text-gray-800 dark:hover:text-dark-200 transition-colors duration-200 focus:outline-none">
+                <i class="fas fa-moon dark:hidden"></i>
+                <i class="fas fa-sun hidden dark:block"></i>
+            </button>
+            <div class="ml-4 flex items-center">
+                <span class="text-gray-600 dark:text-dark-400 mr-2">Hi, {{ username }}</span>
+                <a href="/logout" class="text-gray-600 flex items-center dark:text-dark-400 hover:text-red-500 dark:hover:text-red-400">
+                    <i class="fas fa-sign-out-alt mr-1"></i>
+                </a>
+            </div>
+        </nav>
+        <div class="md:hidden">
+            <button id="menu-toggle" class="text-gray-600 hover:text-green-500 focus:outline-none dark:text-dark-400 dark:hover:text-green-400">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+    <nav id="mobile-menu" class="hidden md:hidden bg-white dark:bg-dark-800">
+        <div class="px-4 py-2 text-gray-600 dark:text-dark-400">
+            <span>Welcome, {{ username }}</span>
+        </div>
+        <a href="/dashboard" class="block text-gray-600 hover:text-green-500 px-4 py-2 dark:text-dark-400 dark:hover:text-green-400">
+            <i class="fas fa-home mr-1"></i> Dashboard
+        </a>
+        <a href="/expenses" class="block text-green-500 font-semibold px-4 py-2 dark:text-green-400">
+            <i class="fas fa-wallet mr-1"></i> Expenses
+        </a>
+        <a href="/insights" class="block text-gray-600 hover:text-green-500 px-4 py-2 dark:text-dark-400 dark:hover:text-green-400">
+            <i class="fas fa-chart-line mr-1"></i> Insights
+        </a>
+        <a href="/categories" class="block text-gray-600 hover:text-green-500 px-4 py-2 dark:text-dark-400 dark:hover:text-green-400">
+            <i class="fas fa-list-ul mr-1"></i> Categories
+        </a>
+        <button id="mobile-theme-toggle" class="block w-full text-left text-gray-600 hover:text-gray-800 px-4 py-2 dark:text-dark-400 dark:hover:text-dark-200">
+            <i class="fas fa-moon mr-1 dark:hidden"></i>
+            <i class="fas fa-sun mr-1 hidden dark:block"></i>
+            Toggle Theme
+        </button>
+        <a href="/logout" class="block text-gray-600 hover:text-red-500 px-4 py-2 dark:text-dark-400 dark:hover:text-red-400">
+            <i class="fas fa-sign-out-alt mr-1"></i> Logout
+        </a>
+    </nav>
+</header>
+
+<main class="container mx-auto px-4 py-24">
+    <h2 class="text-3xl font-bold mb-6 dark:text-dark-100">
+        Update Item
+    </h2>
+
+    <div class="bg-white p-6 rounded-lg shadow max-w-lg mx-auto dark:bg-dark-800">
+        <form action="/update/{{ item.id }}" method="POST">
+            <div class="mb-4">
+                <label for="item" class="block text-gray-700 mb-2 dark:text-dark-400">Category</label>
+                <select name="item" id="item" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-dark-700 dark:border-dark-600 dark:text-dark-100" required>
+                    <option value="" disabled>Select a category</option>
+                    <option value="Housing" {% if item.item == 'Housing' %}selected{% endif %}>Housing</option>
+                    <option value="Utilities" {% if item.item == 'Utilities' %}selected{% endif %}>Utilities</option>
+                    <option value="Groceries" {% if item.item == 'Groceries' %}selected{% endif %}>Groceries</option>
+                    <option value="Dining" {% if item.item == 'Dining' %}selected{% endif %}>Dining</option>
+                    <option value="Transportation" {% if item.item == 'Transportation' %}selected{% endif %}>Transportation</option>
+                    <option value="Insurance" {% if item.item == 'Insurance' %}selected{% endif %}>Insurance</option>
+                    <option value="Healthcare" {% if item.item == 'Healthcare' %}selected{% endif %}>Healthcare</option>
+                    <option value="Investments" {% if item.item == 'Investments' %}selected{% endif %}>Investments</option>
+                    <option value="Entertainment" {% if item.item == 'Entertainment' %}selected{% endif %}>Entertainment</option>
+                    <option value="Clothing" {% if item.item == 'Clothing' %}selected{% endif %}>Clothing</option>
+                    <option value="Personal Care" {% if item.item == 'Personal Care' %}selected{% endif %}>Personal Care</option>
+                    <option value="Subscriptions" {% if item.item == 'Subscriptions' %}selected{% endif %}>Subscriptions</option>
+                    <option value="Travel" {% if item.item == 'Travel' %}selected{% endif %}>Travel</option>
+                    <option value="Fitness" {% if item.item == 'Fitness' %}selected{% endif %}>Fitness</option>
+                    <option value="Pets" {% if item.item == 'Pets' %}selected{% endif %}>Pets</option>
+                    <option value="Technology" {% if item.item == 'Technology' %}selected{% endif %}>Technology</option>
+                    <option value="Debt" {% if item.item == 'Debt' %}selected{% endif %}>Debt</option>
+                    <option value="Gifts/Donations" {% if item.item == 'Gifts/Donations' %}selected{% endif %}>Gifts/Donations</option>
+                    <option value="Miscellaneous" {% if item.item == 'Miscellaneous' or item.item == 'Misc' %}selected{% endif %}>Miscellaneous</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label for="name" class="block text-gray-700 mb-2 dark:text-dark-400">Item Name</label>
+                <input type="text" name="name" id="name" value="{{ item.name }}" 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-dark-700 dark:border-dark-600 dark:text-dark-100" 
+                    placeholder="e.g., Rent, Netflix, Groceries" required>
+            </div>
+            
+            <div class="mb-6">
+                <label for="cost" class="block text-gray-700 mb-2 dark:text-dark-400">Cost</label>
+                <input type="number" name="cost" id="cost" value="{{ item.cost }}" 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-dark-700 dark:border-dark-600 dark:text-dark-100" 
+                    step="0.01" min="0" required>
+            </div>
+            
+            <div class="mb-6">
+                <label for="date" class="block text-gray-700 mb-2 dark:text-dark-400">Date</label>
+                <input type="date" name="date" id="date" value="{{ item.date_created.strftime('%Y-%m-%d') }}" 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-dark-700 dark:border-dark-600 dark:text-dark-100">
+                <small class="text-gray-500 dark:text-dark-500">Leave unchanged to keep current date</small>
+            </div>
+            
+            <div class="flex justify-between">
+                <a href="/expenses" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors dark:bg-dark-700 dark:text-dark-300 dark:hover:bg-dark-600">
+                    Cancel
+                </a>
+                <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                    Update Item
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<script>
+    document.getElementById('menu-toggle').addEventListener('click', function() {
+        var menu = document.getElementById('mobile-menu');
+        menu.classList.toggle('hidden');
+    });
+    
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('theme-toggle');
+    const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
+    const html = document.documentElement;
+
+    // Check for saved user preference or use system preference
+    const userTheme = localStorage.getItem('theme');
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    // Initial theme check
+    const themeCheck = () => {
+        if (userTheme === 'dark' || (!userTheme && systemTheme)) {
+            html.classList.add('dark');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            if (mobileThemeToggle) {
+                mobileThemeToggle.innerHTML = '<i class="fas fa-sun mr-1"></i> Toggle Theme';
+            }
+        } else {
+            html.classList.remove('dark');
+            themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            if (mobileThemeToggle) {
+                mobileThemeToggle.innerHTML = '<i class="fas fa-moon mr-1"></i> Toggle Theme';
+            }
+        }
+    };
+
+    // Manual theme switch
+    const themeSwitch = () => {
+        if (html.classList.contains('dark')) {
+            html.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+            themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            if (mobileThemeToggle) {
+                mobileThemeToggle.innerHTML = '<i class="fas fa-moon mr-1"></i> Toggle Theme';
+            }
+        } else {
+            html.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            if (mobileThemeToggle) {
+                mobileThemeToggle.innerHTML = '<i class="fas fa-sun mr-1"></i> Toggle Theme';
+            }
+        }
+    };
+
+    // Event listeners for theme toggle buttons
+    if (themeToggle) {
+        themeToggle.addEventListener('click', themeSwitch);
+    }
+    if (mobileThemeToggle) {
+        mobileThemeToggle.addEventListener('click', themeSwitch);
+    }
+
+    // Invoke theme check on initial load
+    themeCheck();
+</script>
+</body>
+</html> 

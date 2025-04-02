@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Budget Buddy - Insights</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" sizes="any">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            100: '#f3f4f6',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                            400: '#9ca3af',
+                            500: '#6b7280',
+                            600: '#4b5563',
+                            700: '#374151',
+                            800: '#1f2937',
+                            900: '#111827',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        #theme-toggle, #mobile-theme-toggle {
+            transition: all 0.3s ease;
+        }
+        #theme-toggle:hover, #mobile-theme-toggle:hover {
+            transform: scale(1.1);
+        }
+        #theme-toggle:active, #mobile-theme-toggle:active {
+            transform: scale(0.95);
+        }
+        .dark .chartjs-render-monitor {
+            filter: brightness(0.9) contrast(1.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-dark-900 dark:text-dark-200">
+    <header class="bg-white shadow fixed w-full z-10 dark:bg-dark-800 dark:shadow-dark">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <div class="bg-green-500 text-white rounded-full w-10 h-10 flex items-center justify-center">
+                    <span class="font-bold">BB</span>
+                </div>
+                <h1 class="ml-3 text-2xl font-bold text-green-500">Budget Buddy</h1>
+            </div>
+            <nav class="hidden md:flex space-x-4 items-center">
+                <a class="text-gray-600 flex items-center dark:text-dark-400 hover:text-green-500 dark:hover:text-green-400" href="/dashboard">
+                    <i class="fas fa-home mr-1"></i> Dashboard
+                </a>
+                <a class="text-gray-600 flex items-center dark:text-dark-400 hover:text-green-500 dark:hover:text-green-400" href="/expenses">
+                    <i class="fas fa-wallet mr-1"></i> Expenses
+                </a>
+                <a class="text-green-500 font-semibold flex items-center dark:text-green-400" href="/insights">
+                    <i class="fas fa-chart-line mr-1"></i> Insights
+                </a>
+                <a class="text-gray-600 flex items-center dark:text-dark-400 hover:text-green-500 dark:hover:text-green-400" href="/categories">
+                    <i class="fas fa-list-ul mr-1"></i> Categories
+                </a>
+                <button id="theme-toggle" class="ml-4 text-gray-600 dark:text-dark-400 hover:text-gray-800 dark:hover:text-dark-200 transition-colors duration-200 focus:outline-none">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                </button>
+                <!-- User menu with logout -->
+                <div class="ml-4 relative">
+                    <div class="flex items-center">
+                        <span class="hidden md:inline-block text-sm text-gray-600 dark:text-dark-400 mr-2">Hi, {{ username }}</span>
+                        <a href="/logout" class="text-gray-600 hover:text-red-500 dark:text-dark-400 dark:hover:text-red-400 transition-colors duration-200">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span class="sr-only">Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+            <div class="md:hidden">
+                <button id="menu-toggle" class="text-gray-600 hover:text-green-500 focus:outline-none dark:text-dark-400 dark:hover:text-green-400">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-dark-800">
+            <div class="px-4 py-2 text-gray-600 dark:text-dark-400">
+                <span>Welcome, {{ username }}</span>
+            </div>
+            <a href="/dashboard" class="block px-4 py-2 text-gray-600 hover:text-green-500 dark:text-dark-400 dark:hover:text-green-400">
+                <i class="fas fa-home mr-1"></i> Dashboard
+            </a>
+            <a href="/expenses" class="block px-4 py-2 text-gray-600 hover:text-green-500 dark:text-dark-400 dark:hover:text-green-400">
+                <i class="fas fa-wallet mr-1"></i> Expenses
+            </a>
+            <a href="/insights" class="block px-4 py-2 text-green-500 font-semibold dark:text-green-400">
+                <i class="fas fa-chart-line mr-1"></i> Insights
+            </a>
+            <a href="/categories" class="block px-4 py-2 text-gray-600 hover:text-green-500 dark:text-dark-400 dark:hover:text-green-400">
+                <i class="fas fa-list-ul mr-1"></i> Categories
+            </a>
+            <button id="mobile-theme-toggle" class="block w-full text-left px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-dark-400 dark:hover:text-dark-200">
+                <i class="fas fa-moon mr-1 dark:hidden"></i>
+                <i class="fas fa-sun mr-1 hidden dark:block"></i>
+                Toggle Theme
+            </button>
+            <a href="/logout" class="block px-4 py-2 text-gray-600 hover:text-red-500 dark:text-dark-400 dark:hover:text-red-400 border-t border-gray-200 dark:border-dark-700">
+                <i class="fas fa-sign-out-alt mr-1"></i> Logout
+            </a>
+        </div>
+    </header>
+    <main class="container mx-auto px-4 py-8 pt-20">
+        <h1 class="text-3xl font-semibold mb-2 dark:text-dark-100">Insights</h1>
+        <p class="text-gray-600 mb-8 dark:text-dark-400">Smart analysis of your spending habits</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow dark:bg-dark-800">
+                <h2 class="text-xl font-semibold mb-4 dark:text-dark-100">Spending by Category</h2>
+                <p class="text-gray-600 mb-4 dark:text-dark-400">Your expense distribution</p>
+                <div class="mt-4" style="height: 300px;">
+                    <canvas id="categoryPieChart"></canvas>
+                </div>
+                <ul class="text-gray-600 space-y-2 dark:text-dark-400">
+                    {% for category, amount in category_data.items() %}
+                    <li>
+                        <span class="inline-block w-4 h-4 bg-green-500 rounded-full mr-2"></span> 
+                        {{ category }}: ${{ "%.2f"|format(amount) }}
+                    </li>
+                    {% endfor %}
+                    
+                    {% if not category_data %}
+                    <li>No spending data available yet</li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow dark:bg-dark-800">
+                <h2 class="text-xl font-semibold mb-4 dark:text-dark-100">Monthly Budget</h2>
+                <p class="text-gray-600 mb-4 dark:text-dark-400">Your current spending progress</p>
+                <div class="text-3xl font-semibold text-green-600 mb-2 dark:text-green-400">${{ "%.2f"|format(total_spent) }} of ${{ "%.2f"|format(monthly_budget) }}</div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4 dark:bg-dark-600">
+                    <div class="bg-green-500 h-2.5 rounded-full dark:bg-green-400" 
+                         id="insights-budget-bar" 
+                         data-percentage="{{ (total_spent / monthly_budget) * 100 }}"></div>
+                </div>
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <div class="text-2xl font-semibold dark:text-dark-100">{{ "%.2f"|format(monthly_budget - total_spent) }}</div>
+                        <div class="text-gray-600 dark:text-dark-400">Remaining</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-semibold dark:text-dark-100">{{ items|length }}</div>
+                        <div class="text-gray-600 dark:text-dark-400">Total Items</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow mb-8 dark:bg-dark-800">
+            <h2 class="text-xl font-semibold mb-4 dark:text-dark-100">Spending Trend</h2>
+            <p class="text-gray-600 mb-4 dark:text-dark-400">Your recent spending activity</p>
+            
+            {% if items %}
+            <canvas id="spendingTrendChart" class="mx-auto" style="max-width: 100%; height: 300px;"></canvas>
+            {% else %}
+            <div class="text-center py-8 text-gray-500 dark:text-dark-400">
+                <p>No spending data available yet. Add some items to see your spending trend!</p>
+            </div>
+            {% endif %}
+            <div class="flex justify-center mb-4 space-x-2">
+                <button class="time-period-btn bg-green-500 text-white px-3 py-1 rounded" data-period="daily">Daily</button>
+                <button class="time-period-btn bg-gray-200 px-3 py-1 rounded dark:bg-dark-700" data-period="weekly">Weekly</button>
+                <button class="time-period-btn bg-gray-200 px-3 py-1 rounded dark:bg-dark-700" data-period="monthly">Monthly</button>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow mb-8 dark:bg-dark-800">
+            <h2 class="text-xl font-semibold mb-4 dark:text-dark-100">AI Insights</h2>
+            <p class="text-gray-600 mb-4 dark:text-dark-400">Smart analysis of your spending habits</p>
+            <div class="flex items-start mb-4">
+                <i class="fas fa-arrow-up text-red-500 text-2xl mr-4"></i>
+                <div>
+                    <div class="font-semibold dark:text-dark-100">Highest Spending Item</div>
+                    <div class="text-gray-600 dark:text-dark-400">
+                        {% if highest_category[0] != "None" %}
+                        Your highest expense is {{ highest_category[0] }} with ${{ "%.2f"|format(highest_category[1]) }}.
+                        {% else %}
+                        No spending data available yet.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-start">
+                <i class="fas fa-lightbulb text-green-500 text-2xl mr-4"></i>
+                <div>
+                    <div class="font-semibold dark:text-dark-100">Budget Status</div>
+                    <div class="text-gray-600 dark:text-dark-400">
+                        {% if total_spent > 0 %}
+                            {% if total_spent > monthly_budget %}
+                            You are over budget by ${{ "%.2f"|format(total_spent - monthly_budget) }}.
+                            {% else %}
+                            You have ${{ "%.2f"|format(monthly_budget - total_spent) }} remaining in your budget.
+                            {% endif %}
+                        {% else %}
+                        No spending data available yet.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow mt-6 dark:bg-dark-800">
+            <h3 class="text-xl font-semibold mb-4 dark:text-dark-100">Ask Budget Buddy</h3>
+            <p class="text-gray-600 mb-4 dark:text-dark-400">Have a question about your budget? Ask away!</p>
+            <form action="/insights" method="post" class="flex flex-col gap-2" id="aiQueryForm">
+                <input type="text" name="query" placeholder="e.g., How can I save more money?" 
+                       class="border p-2 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-dark-100">
+                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white p-2 rounded flex justify-center items-center transition-colors duration-200" id="submitButton">
+                    <span>Ask</span>
+                    <div class="ml-2 hidden" id="loadingSpinner">
+                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </button>
+            </form>
+            <div class="mt-4 p-4 border border-gray-200 rounded-lg dark:border-dark-600">
+                <h4 class="font-semibold mb-2 dark:text-dark-100">Insights:</h4>
+                <div id="responseContainer" class="dark:text-dark-300">{{ prompt_result|safe if prompt_result else "Ask a question about your budget." }}</div>
+            </div>
+        </div>
+    </main>
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
+        const html = document.documentElement;
+    
+        // Check for saved user preference or use system preference
+        const userTheme = localStorage.getItem('theme');
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+        // Theme management functions
+        const themeCheck = () => {
+            if (userTheme === 'dark' || (!userTheme && systemTheme)) {
+                html.classList.add('dark');
+                if (themeToggle) themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                if (mobileThemeToggle) mobileThemeToggle.innerHTML = '<i class="fas fa-sun mr-1"></i> Toggle Theme';
+            } else {
+                html.classList.remove('dark');
+                if (themeToggle) themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                if (mobileThemeToggle) mobileThemeToggle.innerHTML = '<i class="fas fa-moon mr-1"></i> Toggle Theme';
+            }
+        };
+    
+        const themeSwitch = () => {
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                if (themeToggle) themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                if (mobileThemeToggle) mobileThemeToggle.innerHTML = '<i class="fas fa-moon mr-1"></i> Toggle Theme';
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                if (themeToggle) themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                if (mobileThemeToggle) mobileThemeToggle.innerHTML = '<i class="fas fa-sun mr-1"></i> Toggle Theme';
+            }
+        };
+    
+        // Event listeners
+        if (themeToggle) themeToggle.addEventListener('click', themeSwitch);
+        if (mobileThemeToggle) mobileThemeToggle.addEventListener('click', themeSwitch);
+        themeCheck();
+    
+        // Mobile menu toggle
+        document.getElementById('menu-toggle')?.addEventListener('click', function() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+    
+        // AI Query Form handling
+        document.getElementById('aiQueryForm')?.addEventListener('submit', function() {
+            const spinner = document.getElementById('loadingSpinner');
+            const button = document.getElementById('submitButton');
+            if (spinner) spinner.classList.remove('hidden');
+            if (button) {
+                button.querySelector('span').textContent = 'Loading...';
+                button.disabled = true;
+            }
+        });
+    
+        // Chart initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Budget bar
+            const budgetBar = document.getElementById('insights-budget-bar');
+            if (budgetBar) {
+                const percentage = parseFloat(budgetBar.getAttribute('data-percentage')) || 0;
+                budgetBar.style.width = Math.min(100, percentage) + '%';
+                if (percentage > 100) {
+                    budgetBar.classList.replace('bg-green-500', 'bg-red-500');
+                    budgetBar.classList.replace('dark:bg-green-400', 'dark:bg-red-400');
+                }
+            }
+    
+            // Pie Chart
+            const pieCtx = document.getElementById('categoryPieChart');
+            if (pieCtx) {
+                const categoryDataStr = `{
+                    "labels": [{% for category, amount in category_data.items() %}"{{ category }}",{% endfor %}],
+                    "data": [{% for category, amount in category_data.items() %}{{ amount }},{% endfor %}]
+                }`;
+                
+                // Parse the JSON string
+                const categoryData = JSON.parse(categoryDataStr.replace(/,]/g, ']'));
+                
+                // Colors for the chart
+                const backgroundColors = [
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(153, 102, 255, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(255, 159, 64, 0.7)',
+                    'rgba(201, 203, 207, 0.7)',
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(54, 162, 235, 0.7)'
+                ];
+                
+                const borderColors = [
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(255, 159, 64, 1)',
+                    'rgba(201, 203, 207, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)'
+                ];
+                
+                // Create the chart
+                new Chart(pieCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: categoryData.labels,
+                        datasets: [{
+                            label: 'Spending by Category',
+                            data: categoryData.data,
+                            backgroundColor: backgroundColors.slice(0, categoryData.labels.length),
+                            borderColor: borderColors.slice(0, categoryData.labels.length),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { 
+                                position: 'right',
+                                labels: {
+                                    color: html.classList.contains('dark') ? '#e5e7eb' : '#6b7280'
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.label}: $${context.raw.toFixed(2)}`;
+                                    }
+                                }
+                            }
+                        },
+                        animation: {
+                            animateScale: true,
+                            animateRotate: true
+                        }
+                    }
+                });
+            }
+    
+            // Line Chart
+            const lineCtx = document.getElementById('spendingTrendChart');
+            if (lineCtx) {
+                const chartData = {
+                    daily: {
+                        labels: JSON.parse('{{ daily_labels|tojson }}'),
+                        data: JSON.parse('{{ daily_amounts|tojson }}'),
+                        label: 'Daily Spending'
+                    },
+                    weekly: {
+                        labels: Object.keys(JSON.parse('{{ weekly_totals|tojson }}')),
+                        data: Object.values(JSON.parse('{{ weekly_totals|tojson }}')),
+                        label: 'Weekly Spending'
+                    },
+                    monthly: {
+                        labels: Object.keys(JSON.parse('{{ monthly_totals|tojson }}')),
+                        data: Object.values(JSON.parse('{{ monthly_totals|tojson }}')),
+                        label: 'Monthly Spending'
+                    }
+                };
+    
+                const spendingChart = new Chart(lineCtx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.daily.labels,
+                        datasets: [{
+                            label: chartData.daily.label,
+                            data: chartData.daily.data,
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 2,
+                            tension: 0.1,
+                            fill: true
+                        }]
+                    },
+                    options: getChartOptions('Spending Trend')
+                });
+    
+                // Time period selector
+                document.querySelectorAll('.time-period-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const period = this.dataset.period;
+                        document.querySelectorAll('.time-period-btn').forEach(b => {
+                            b.classList.toggle('bg-green-500', b === this);
+                            b.classList.toggle('text-white', b === this);
+                            b.classList.toggle('bg-gray-200', b !== this);
+                            b.classList.toggle('dark:bg-dark-700', b !== this);
+                        });
+    
+                        spendingChart.data.labels = chartData[period].labels;
+                        spendingChart.data.datasets[0].data = chartData[period].data;
+                        spendingChart.data.datasets[0].label = chartData[period].label;
+                        spendingChart.update();
+                    });
+                });
+            }
+    
+            function getChartOptions(title) {
+                const isDark = html.classList.contains('dark');
+                return {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: isDark ? '#e5e7eb' : '#6b7280'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label || ''}: $${context.parsed.y?.toFixed(2) || '0.00'}`;
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: title,
+                            color: isDark ? '#e5e7eb' : '#6b7280'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => `$${value}`,
+                                color: isDark ? '#e5e7eb' : '#6b7280'
+                            },
+                            grid: {
+                                color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: isDark ? '#e5e7eb' : '#6b7280'
+                            },
+                            grid: {
+                                color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                            }
+                        }
+                    }
+                };
+            }
+        });
+    </script>
+</body>
+</html>

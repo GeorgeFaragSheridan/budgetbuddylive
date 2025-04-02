@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Budget Buddy</title>
+{% endblock %}
+
+{% block body %}
+<div class="content">
+    <h1 style="text-align: center">Budget Buddy</h1>
+    <h4 style="text-align: center">This is a perplexity prompt box!</h4>
+    <a href="dashboard.html">Dashboard</a>
+
+    <div class="form" style="text-align: center;">
+        <form id="queryForm">
+            <label for="userQuery">Enter your query:</label>
+            <input type="text" id="userQuery" name="userQuery" placeholder="Type your query here..." required>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+  
+    <h4 style="text-align: center">Prompt Result:</h4>
+    <div id="promptresult-container" style="text-align: left; max-height: max-content; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-left: 60%; margin-right: 20px;">
+        <div id="promptresult" style="text-align: left; display: block; word-wrap: break-word;">{{ prompt_result if prompt_result else "No result yet." }}</div>
+    </div>
+</div>
+
+<script>
+    document.getElementById("queryForm").addEventListener("submit", function(event) {
+        event.preventDefault(); // Prevent default form submission behavior
+    
+        const userQuery = document.getElementById("userQuery").value;
+    
+        fetch("/submit", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ userQuery: userQuery })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const promptResultContainer = document.getElementById("promptresult");
+            promptResultContainer.innerHTML = data.prompt_result || "Error processing query.";
+    
+            // Scroll to the bottom of the container to show the result if it's large
+            promptResultContainer.scrollTop = promptResultContainer.scrollHeight;
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            document.getElementById("promptresult").innerText = "An error occurred.";
+        });
+    });
+</script>
+
+{% endblock %}
