@@ -16,7 +16,7 @@ Tired of page after page to use the most basic features of a product? Our dashbo
 
 Whether you're feeling nostaligic for spreadheets of old, or you need some more controls (probably cause you punched in 4000 instead of 40.00, lets be real), the expenses tab has got you covered, giving you a nice, neat, no-nonsense of what you've spent your hard earned cash and what you want to add to make your insights more powerful
 
-### Insights
+### Insights 
 <img src="readmeimages/budgetbuddy3.png" alt="drawing" width="400"/>
 
 If you like pretty graphs, youre gonna love the insights page! This page is dedicated to giving you the most comprehensive overview of your finances as well as how you spend your money as well as powerful tools to help you better spend your money
